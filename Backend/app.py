@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
 # Permitir todos los orígenes (para desarrollo)
-origins = ["http://dementiaia-citt-s3.s3-website-us-east-1.amazonaws.com/"]  # ⚠️ en producción restringe a tu frontend real
+origins = ["*"]  # ⚠️ en producción restringe a tu frontend real
 
 app.add_middleware(
     CORSMiddleware,
