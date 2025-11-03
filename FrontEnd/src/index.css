@@ -1,68 +1,74 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* ----- RESET BÁSICO DE PÁGINA ----- */
+html, body, #root {
+  height: 100%;
+  width: 100%;
 }
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  margin: 0;               /* quita márgenes del body */
+}
+html {
+  overflow-x: hidden;      /* evita scroll lateral por componentes con 100vw */
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* ----- CONTENEDORES BOOTSTRAP A PANTALLA COMPLETA ----- */
+/* Quita padding lateral del container fluido (a veces deja “franjas”) */
+.container-fluid {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+/* Por si alguna fila no lleva gx-0, garantizamos cero gutters horizontales */
+.row {
+  --bs-gutter-x: 0 !important;
+}
+
+/* Columnas sin padding lateral (mantiene el look de tus Cards) */
+[class*="col-"], [class^="col"] {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Asegura que el contenedor principal realmente ocupe la altura de la ventana */
+.vh-100,
+.min-vh-100 {
+  min-height: 100vh !important;
+}
+
+/* ----- TARJETAS QUE ESTIREN A TODO EL ALTO DISPONIBLE ----- */
+.app-card {
+  height: 100%;
+  border-radius: 0; /* opcional: bordes cuadrados si quieres continuidad al borde */
+}
+
+/* Scrolling suave dentro del panel de historial */
+.session-list {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ----- INPUT DE ARCHIVO: ESTILO DEL BOTÓN (SIN MOSTRAR NOMBRE) ----- */
+/* No ocultamos el control; solo estilizamos el botón del file-picker. 
+   Tu JS limpia el value, por lo que el nombre no queda visible. */
+input[type="file"]::file-selector-button {
+  border: 1px solid rgba(13,110,253,.5);
+  padding: .375rem .75rem;
+  border-radius: .375rem;
+  background: transparent;
   cursor: pointer;
-  transition: border-color 0.25s;
 }
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+input[type="file"]::file-selector-button:hover {
+  background: rgba(13,110,253,.06);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
+/* Mensaje pequeño junto al botón del file */
+.file-hint {
+  font-size: .875rem;
+  color: #6c757d;
+}
+
+/* ----- AJUSTES MENORES RESPONSIVE ----- */
+@media (max-width: 767.98px) {
+  .card-body {
+    padding: 1.25rem !important;
   }
 }
