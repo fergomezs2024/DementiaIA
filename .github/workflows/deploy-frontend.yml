@@ -3,6 +3,9 @@ name: Build & Deploy React to EC2 (Amazon Linux)
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-frontend.yml'
 
 jobs:
   build:
