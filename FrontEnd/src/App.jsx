@@ -57,7 +57,7 @@ function App() {
   const fileInputRef = useRef(null);
   const [fileHint, setFileHint] = useState("");
 
-  // ---- Sesión y autolimpieza ----
+
   useEffect(() => {
     const now = Date.now();
     const startRaw = sessionStorage.getItem(STORAGE_KEYS.SESSION_START);
