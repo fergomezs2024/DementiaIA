@@ -56,7 +56,7 @@ function App() {
   const [selected, setSelected] = useState(null);
   const fileInputRef = useRef(null);
   const [fileHint, setFileHint] = useState("");
-
+  // ---- Cargar historial de sessionStorage ---- 
 
   useEffect(() => {
     const now = Date.now();
