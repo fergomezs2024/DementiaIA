@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { sha256 } from "js-sha256";
+import { v4 as uuidv4 } from "uuid";
+
 import {
   Container,
   Row,
@@ -22,6 +24,9 @@ const STORAGE_KEYS = {
 };
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 
+/* -----------------------------
+   Función para leer imagen
+------------------------------ */
 function readAsDataURL(file) {
   return new Promise((resolve, reject) => {
     const fr = new FileReader();
@@ -31,6 +36,9 @@ function readAsDataURL(file) {
   });
 }
 
+/* -----------------------------
+   Formatear hora
+------------------------------ */
 function formatTime(ts) {
   const d = new Date(ts);
   return d.toLocaleString(undefined, {
@@ -42,11 +50,29 @@ function formatTime(ts) {
   });
 }
 
+/* -----------------------------
+   Reemplazo de crypto.getRandomValues
+------------------------------ */
+function randomHex(bytes = 16) {
+  let s = "";
+  for (let i = 0; i < bytes; i++) {
+    s += Math.floor(Math.random() * 256)
+      .toString(16)
+      .padStart(2, "0");
+  }
+  return s;
+}
 
+/* -----------------------------
+   Hash SHA256 usando js-sha256
+------------------------------ */
 async function sha256Hex(str) {
   return sha256(str);
 }
 
+/* =============================
+   COMPONENTE PRINCIPAL
+============================= */
 function App() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -55,8 +81,10 @@ function App() {
   const [selected, setSelected] = useState(null);
   const fileInputRef = useRef(null);
   const [fileHint, setFileHint] = useState("");
-  // ---- Cargar historial de sessionStorage ---- 
 
+  /* ----------------------------------
+     Cargar historial de sessionStorage
+  ----------------------------------- */
   useEffect(() => {
     const now = Date.now();
     const startRaw = sessionStorage.getItem(STORAGE_KEYS.SESSION_START);
@@ -98,13 +126,14 @@ function App() {
     return new Date(Number(startRaw) + FOUR_HOURS_MS);
   }, [history.length]);
 
-  // ---- Archivo seleccionado ----
+  /* -----------------------------
+     Archivo seleccionado
+  ------------------------------ */
   const handleFileChange = (e) => {
     const f = e.target.files?.[0];
     if (f) {
       setFile(f);
       setFileHint("Archivo cargado correctamente ✅");
-      // limpiamos el input visualmente
       if (fileInputRef.current) fileInputRef.current.value = "";
     } else {
       setFile(null);
@@ -112,7 +141,9 @@ function App() {
     }
   };
 
-  // ---- Enviar imagen ----
+  /* -----------------------------
+     Enviar imagen al backend
+  ------------------------------ */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file) return;
@@ -137,19 +168,19 @@ function App() {
       const diagnosis = apiRes?.prediction ?? "Diagnóstico no disponible";
       setResult(diagnosis);
 
-      const salt = crypto.getRandomValues(new Uint8Array(16));
-      const saltHex = Array.from(salt).map((b) => b.toString(16).padStart(2, "0")).join("");
+      const saltHex = randomHex(16);
       const tsNow = Date.now();
       const hash = await sha256Hex(`${saltHex}|${file.name}|${tsNow}`);
       const displayId = hash.slice(0, 12);
 
       const newItem = {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         ts: tsNow,
         diagnosis,
         imageDataUrl: dataUrl,
         displayId,
       };
+
       setHistory((prev) => [newItem, ...prev]);
     } catch (err) {
       console.error(err);
@@ -159,6 +190,9 @@ function App() {
     }
   };
 
+  /* -----------------------------
+     Limpiar historial
+  ------------------------------ */
   const clearSession = () => {
     setHistory([]);
     setSelected(null);
@@ -166,6 +200,9 @@ function App() {
     sessionStorage.removeItem(STORAGE_KEYS.HISTORY);
   };
 
+  /* -----------------------------
+     Render UI
+  ------------------------------ */
   return (
     <Container
       fluid
@@ -173,13 +210,11 @@ function App() {
       style={{ width: "100vw", overflow: "hidden" }}
     >
       <Row className="w-100 gx-0 gy-4 flex-grow-1">
-        {/* ---- Izquierda ---- */}
+        {/* ---- IZQUIERDA ---- */}
         <Col md={7} lg={8} className="p-0">
           <Card className="shadow-lg border-0 rounded-3 h-100">
             <Card.Body className="p-5 d-flex flex-column">
-              <h2 className="text-center mb-3 text-primary">
-                🧠 Diagnóstico de Resonancias
-              </h2>
+              <h2 className="text-center mb-3 text-primary">🧠 Diagnóstico de Resonancias</h2>
               <p className="text-muted text-center mb-4">
                 Cargue una resonancia magnética para analizar posibles casos de demencia.
               </p>
@@ -201,9 +236,7 @@ function App() {
                     accept="image/*"
                     onChange={handleFileChange}
                   />
-                  {fileHint && (
-                    <div className="small text-muted mt-1">{fileHint}</div>
-                  )}
+                  {fileHint && <div className="small text-muted mt-1">{fileHint}</div>}
                 </Form.Group>
 
                 <div className="d-grid gap-2 d-sm-flex">
@@ -235,14 +268,14 @@ function App() {
               )}
 
               <div className="mt-auto text-muted small text-center">
-                Los estudios se guardan sólo durante esta sesión y se eliminan automáticamente
+                Los estudios se guardan solo durante la sesión y se eliminan automáticamente
                 a las 4 horas o al presionar “Limpiar”.
               </div>
             </Card.Body>
           </Card>
         </Col>
 
-        {/* ---- Derecha ---- */}
+        {/* ---- DERECHA ---- */}
         <Col md={5} lg={4} className="p-0">
           <Card className="shadow-lg border-0 rounded-3 h-100">
             <Card.Header className="bg-white d-flex justify-content-between align-items-center">
@@ -256,11 +289,7 @@ function App() {
               {history.length === 0 ? (
                 <div className="p-4 text-center text-muted">No hay estudios en esta sesión.</div>
               ) : (
-                <ListGroup
-                  variant="flush"
-                  className="flex-grow-1"
-                  style={{ overflowY: "auto" }}
-                >
+                <ListGroup variant="flush" className="flex-grow-1" style={{ overflowY: "auto" }}>
                   {history.map((item) => (
                     <ListGroup.Item
                       key={item.id}
@@ -291,7 +320,7 @@ function App() {
         </Col>
       </Row>
 
-      {/* ---- Modal ---- */}
+      {/* ---- MODAL ---- */}
       <Modal show={!!selected} onHide={() => setSelected(null)} size="lg" centered scrollable>
         <Modal.Header closeButton>
           <Modal.Title>Estudio ID: {selected?.displayId}</Modal.Title>
@@ -307,12 +336,7 @@ function App() {
                 <span className="text-primary">{selected.diagnosis}</span>
               </div>
               <div className="w-100 d-flex justify-content-center">
-                <Image
-                  src={selected.imageDataUrl}
-                  alt="Imagen de estudio"
-                  fluid
-                  rounded
-                />
+                <Image src={selected.imageDataUrl} alt="Imagen de estudio" fluid rounded />
               </div>
             </>
           )}
