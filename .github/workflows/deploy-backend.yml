@@ -17,12 +17,16 @@ jobs:
 
       - name: Debug backend tree
         run: |
-          echo "Current directory:"
+          echo "=== CURRENT DIRECTORY ==="
           pwd
-          echo "Listing root:"
           ls -la
-          echo "Backend folder content:"
+          echo "=== BACKEND CONTENT ==="
           ls -la Backend
+
+      - name: Show requirements.txt (debug)
+        run: |
+          echo "=== REQUIREMENTS TXT CONTENT ==="
+          cat Backend/requirements.txt
 
       - name: Package backend
         run: |
@@ -77,10 +81,16 @@ jobs:
 
           cd ~/backend/Backend
 
-          echo "==> Building Docker image"
-          docker build -t dementia-backend .
+          echo "==> Showing backend requirements (for debugging)"
+          cat requirements.txt
 
-          echo "==> Stopping old container"
+          echo "==> Removing old Docker images to free space"
+          docker system prune -a -f || true
+
+          echo "==> Building Docker image (no-cache)"
+          docker build --no-cache -t dementia-backend .
+
+          echo "==> Stopping old container if exists"
           docker stop dementia-api || true
           docker rm dementia-api || true
 
@@ -94,3 +104,4 @@ jobs:
         env:
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_HOST: ${{ secrets.EC2_HOST }}
+            
