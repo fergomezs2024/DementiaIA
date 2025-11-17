@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { sha256 } from "js-sha256";
 import {
   Container,
   Row,
@@ -41,11 +42,9 @@ function formatTime(ts) {
   });
 }
 
+
 async function sha256Hex(str) {
-  const data = new TextEncoder().encode(str);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  return sha256(str);
 }
 
 function App() {
