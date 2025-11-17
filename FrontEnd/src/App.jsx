@@ -126,7 +126,7 @@ function App() {
 
     try {
       const [apiRes, dataUrl] = await Promise.all([
-        fetch("http://100.29.239.72:8000/predict", { method: "POST", body: formData }).then(
+        fetch("/api/predict", { method: "POST", body: formData }).then(
           async (r) => {
             if (!r.ok) throw new Error(await r.text());
             return r.json();
