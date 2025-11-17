@@ -1,0 +1,96 @@
+name: Build & Deploy Backend to EC2
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "Backend/**"
+      - ".github/workflows/deploy-backend.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Debug backend tree
+        run: |
+          echo "Current directory:"
+          pwd
+          echo "Listing root:"
+          ls -la
+          echo "Backend folder content:"
+          ls -la Backend
+
+      - name: Package backend
+        run: |
+          tar -czvf backend.tar.gz Backend/
+
+      - name: Upload backend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend
+          path: backend.tar.gz
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment: backendDementaiAi
+
+    steps:
+      - name: Download backend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend
+          path: .
+
+      - name: Prepare SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${EC2_SSH_KEY}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Upload backend to EC2
+        run: |
+          scp -i ~/.ssh/id_ed25519 backend.tar.gz \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/backend.tar.gz
+        env:
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+
+      - name: Build & Restart Backend Docker on EC2
+        run: |
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+
+          echo "==> Cleaning previous backend folder"
+          rm -rf ~/backend || true
+          mkdir -p ~/backend
+
+          echo "==> Extracting new backend"
+          tar -xzvf /tmp/backend.tar.gz -C ~/backend
+
+          cd ~/backend/Backend
+
+          echo "==> Building Docker image"
+          docker build -t dementia-backend .
+
+          echo "==> Stopping old container"
+          docker stop dementia-api || true
+          docker rm dementia-api || true
+
+          echo "==> Running new Docker container"
+          docker run -d \
+            --name dementia-api \
+            -p 8001:8000 \
+            dementia-backend
+
+          EOF
+        env:
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
